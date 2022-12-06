@@ -73,4 +73,55 @@ Render:
     movq game_state, rax
     movq [rax + offsetof(struct GameState, player2)], rax
     movss xmm0, [rax + offsetof(struct Player, position.x)]
-    movss xmm1, [rax +
+    movss xmm1, [rax + offsetof(struct Player, position.y)]
+    call DrawRectangle
+
+    ; draw ball
+    movq game_state, rax
+    movq [rax + offsetof(struct GameState, ball)], rax
+    movss xmm0, [rax + offsetof(struct Ball, position.x)]
+    movss xmm1, [rax + offsetof(struct Ball, position.y)]
+    call DrawCircle
+
+    ; draw score
+    movq game_state, rax
+    movq [rax + offsetof(struct GameState, player1)], rax
+    mov eax, [rax + offsetof(struct Player, score)]
+    call DrawText
+
+    movq game_state, rax
+    movq [rax + offsetof(struct GameState, player2)], rax
+    mov eax, [rax + offsetof(struct Player, score)]
+    call DrawText
+
+    ret
+
+; This function will be responsible for initializing the game state, running the game loop, and cleaning up when the game is over.
+
+section .text
+
+global main
+
+main:
+    ; initialize game state
+    movq game_state, rax
+    call InitGameState
+
+    ; run game loop
+    .game_loop:
+        ; update game state
+        call Update
+
+        ; render frame
+        call Render
+
+        ; check for game over
+        call CheckGameOver
+        jz .game_loop
+
+    ; clean up and exit
+    call CleanUp
+    xor eax, eax
+    ret
+
+
