@@ -95,6 +95,103 @@ Render:
     call DrawText
 
     ret
+    
+DrawRectangle:
+    ; calculate top-left corner of rectangle
+    subss xmm1, xmm2
+    mulss xmm1, xmm3
+    addss xmm1, xmm0
+
+    ; calculate bottom-right corner of rectangle
+    addss xmm0, xmm2
+    mulss xmm0, xmm3
+
+    ; draw rectangle
+    mov ecx, [frame_buffer]
+    mov edx, [xmm1 + 0]
+    mov eax, [xmm1 + 4]
+    call DrawLine
+    mov edx, [xmm0 + 0]
+    mov eax, [xmm1 + 4]
+    call DrawLine
+    mov edx, [xmm0 + 0]
+    mov eax, [xmm0 + 4]
+    call DrawLine
+    mov edx, [xmm1 + 0]
+    mov eax, [xmm0 + 4]
+    call DrawLine
+
+    ret
+
+DrawCircle:
+    ; calculate circle center and radius
+    movaps xmm0, xmm1
+    movaps xmm1, xmm2
+    mulss xmm1, xmm1
+
+    ; draw circle
+    mov ecx, [frame_buffer]
+    mov edx, [xmm0 + 0]
+    mov eax, [xmm0 + 4]
+    mov ebx, [xmm1 + 0]
+    call DrawCirclePoints
+
+    ret
+    
+DrawLine:
+    ; calculate line direction
+    movaps xmm2, xmm0
+    subss xmm2, xmm1
+
+    ; calculate line length
+    movaps xmm3, xmm2
+    mulss xmm3, xmm3
+    sqrtss xmm3, xmm3
+
+    ; calculate line step
+    divss xmm2, xmm3
+    movaps xmm4, xmm2
+
+    ; draw line
+    mov ecx, [xmm3 + 0]
+    xor edx, edx
+    .line_loop:
+        movaps xmm5, xmm1
+        addss xmm5, xmm2
+        mov eax, [xmm5 + 0]
+        mov ebx, [xmm5 + 4]
+        call SetPixel
+        addss xmm2, xmm4
+        dec ecx
+        jnz .line_loop
+
+    ret
+
+DrawCirclePoints:
+    ; draw circle points
+    mov ecx, 8
+    xor edx, edx
+    .circle_loop:
+        mov eax, edx
+        mov ebx, ebx
+        call SetPixel
+        inc edx
+        dec ecx
+        jnz .circle_loop
+
+    ret
+
+SetPixel:
+    ; calculate pixel offset in frame buffer
+    mov eax, 800
+    imul eax, ebx
+    add eax, edx
+
+    ; set pixel color
+    mov ebx, [frame_buffer]
+    mov [ebx + eax * 4], ecx
+
+    ret
 
 ; This function will be responsible for initializing the game state, running the game loop, and cleaning up when the game is over.
 
